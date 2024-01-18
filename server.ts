@@ -7,7 +7,12 @@ import kubbyController from './controllers/kubbyController';
 import promController from './controllers/promController';
 
 // promController.getMetrics()
-kubbyController.getClusterInfo()
+
+async function run () {
+  await kubbyController.getClusterInfo()
+  process.exit(0)
+}
+
 
 
 const app = express();
@@ -80,3 +85,5 @@ interface PodObj {
 app.listen(PORT, () => {
   console.log(`Server listening on Port ${PORT}`)
 })
+
+run()

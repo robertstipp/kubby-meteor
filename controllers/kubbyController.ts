@@ -13,16 +13,22 @@ interface KubbyController {
   getMetrics: () => void;
 }
 
-// const gauge = new client.Gauge({
-//   name: 'k8s_node-count',
-//   help: 'Number of pods in the cluster'
-// })
+
+const countNodes = new client.Gauge({
+  name: 'numNodes',
+  help: 'This is number of nodes',
+});
+
 
 const kubbyController: KubbyController = {
   getClusterInfo: async () => {
     const nodeResponse = await k8sApi.listNode()
     const numNodes = nodeResponse.body.items
-    console.log(numNodes.length)
+    countNodes.set(numNodes.length)
+    // console.log(numNodes.length)
+    const metrics = await client.register.metrics()
+    console.log(metrics.toString())
+    // console.log(counter.get())
     
   },
   getMetrics: async() => {
