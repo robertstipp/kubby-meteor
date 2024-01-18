@@ -1,3 +1,4 @@
 /node_modules
 edwins.yaml
+edwinscluster-config.yaml
 kubeConfig.yaml
