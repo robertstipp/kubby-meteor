@@ -1,19 +1,14 @@
 
-import express , {Request, Response} from 'express'
+import express , {ErrorRequestHandler, NextFunction, Request, Response, response} from 'express'
 import cors from 'cors';
 
 import kubbyController from './controllers/kubbyController';
-
 import promController from './controllers/promController';
 
-// promController.getMetrics()
-
-async function run () {
-  await kubbyController.getClusterInfo()
-  process.exit(0)
-}
-
-
+// async function run () {
+//   await kubbyController.getClusterInfo()
+//   process.exit(0)
+// }
 
 const app = express();
 const PORT = 8000;
@@ -32,58 +27,27 @@ app.get('/', (req: Request, res: Response) : void => {
   res.status(200).send("HELLO\n")
 })
 
+app.get('/node-view', kubbyController.getNodeView, (req: Request, res: Response): void => {
+    if (res.locals.nodeView) {
+        res.status(200).json(res.locals.nodeView);
+    } else {
+        res.status(400).send({ message: "Cluster information not found" });
+    }
+}); 
 
-interface PodObj {
-    name: string | undefined,
-    memory : number | string,
-    cpu:  number | string,
-}
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => { 
+    
+    const defaultErr = {
+        log: 'Express error handler caught unknown middleware error',
+        status: 400,
+        message: { err: 'An error occurred' },
+    }
 
-// app.get('/clusterInfo', async (req: Request, res: Response) : Promise <void> => {
-//   try {
-
-//     // NODES PODS CONTAINERS
-//     const cluster = [];
-//     const nodes = [];
-//     const containers = []; 
-//     const pods = [];
-
-//     const nodeResponse =  await k8sApi.listNode();
-//     for (const node of nodeResponse.body.items) {
-//       const nodeObj = {
-//         name: node.metadata?.name,
-//         cpu: node.status?.allocatable?.cpu,
-//         memory: node.status?.allocatable?.memory,
-//         pods: node.status?.allocatable?.pods,
-//         os: node.status?.nodeInfo?.operatingSystem
-//       }
-//       nodes.push(nodeObj)
-//       cluster.push({...nodeObj, type: 'node'})
-//     }
-
-//     const podResponse = await k8sApi.listPodForAllNamespaces()
-//     console.log(podResponse)
-//     res.status(200).json(cluster)
-//   } catch (error) {
-//     console.log(error)
-//   }
-// })
-// app.get('/getAllNodes', async (req: Request, res: Response) : Promise <void> => {
-//   try {
-//     const response = await k8sApi.listNode()
-//     const nodes = response.body.items.map((node)=>node.metadata?.name)
-//     console.log(response.body.items)
-//     res.status(200).json(nodes)
-//   } catch (error) {
-//     console.log(error)
-//   }
-// })
-
-// kubbyController.getClusterInfo()
-
+    const errorObj = Object.assign(defaultErr, err);
+    console.log(errorObj.log);
+    res.status(errorObj.status).send(errorObj.message);
+})
 
 app.listen(PORT, () => {
   console.log(`Server listening on Port ${PORT}`)
 })
-
-run()

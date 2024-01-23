@@ -2,3 +2,8 @@
 edwins.yaml
 edwinscluster-config.yaml
 kubeConfig.yaml
+km_clusterRole.yaml
+km_clusterRoleBinding.yaml
+km_deployment.yaml
+km_service.yaml
+km_serviceAccount.yaml

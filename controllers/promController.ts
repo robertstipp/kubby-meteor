@@ -2,9 +2,7 @@ import client from 'prom-client'
 const collectDefaultMetrics = client.collectDefaultMetrics;
 const register = client.register;
 
-
 collectDefaultMetrics();
-
 interface PromController {
   getMetrics : () => void
 }
