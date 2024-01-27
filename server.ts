@@ -48,30 +48,17 @@ app.get(
   }
 );
 
-<<<<<<< HEAD
-app.get('/cluster-metrics', kubbyController.getClusterMetrics, (req: Request, res: Response): void => {
-
-})
-
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => { 
-    
-    const defaultErr = {
-        log: 'Express error handler caught unknown middleware error',
-        status: 400,
-        message: { err: 'An error occurred' },
-=======
 app.get(
   '/usage-metrics',
   usageMetricsController.getUsageMetrics,
   (req: Request, res: Response): void => {
     if (res.locals.cUsageMetrics) {
-      console.log(res.locals.cUsageMetrics);
+    //   console.log(res.locals.cUsageMetrics);
       res.status(200).json(res.locals.cUsageMetrics);
     } else {
       res
         .status(400)
         .send({ message: 'Container usage metrics information not found' });
->>>>>>> ContainerUsageMetrics/ND
     }
   }
 );
@@ -89,12 +76,5 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 app.listen(PORT, () => {
-<<<<<<< HEAD
-  console.log(`Server listening on Port ${PORT}`)
-})
-
-run(); 
-=======
   console.log(`Server listening on Port ${PORT}`);
 });
->>>>>>> ContainerUsageMetrics/ND
