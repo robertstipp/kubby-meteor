@@ -1,4 +1,10 @@
 import { NextFunction, Response, Request } from 'express';
+import {
+  parseKubernetesMemoryString,
+  parseCpuStringToCores,
+  convertKiBToGiB,
+} from './kubbyController';
+
 import axios from 'axios';
 // type Data = {
 //   metric?: string;
@@ -78,35 +84,50 @@ const usageMetricsController: usageMetricsController = {
 
         podMemData.forEach((val: Data) => {
           const podName = val?.metric?.pod ?? '';
-          podCache[podName] = { MEM: val.value[1] };
+          podCache[podName] = {
+            MEM: val.value[1],
+          };
         });
 
         podCpuData.forEach((val: Data) => {
           const podName = val?.metric?.pod ?? '';
           const currentData = podCache[podName] || {};
-          podCache[podName] = { ...currentData, CPU: val.value[1] };
+          podCache[podName] = {
+            ...currentData,
+            CPU: val.value[1],
+          };
         });
 
         namespaceMemData.forEach((val: Data) => {
           const nsName = val?.metric?.namespace ?? '';
-          nameSpaceCache[nsName] = { MEM: val.value[1] };
+          nameSpaceCache[nsName] = {
+            MEM: val.value[1],
+          };
         });
 
         namespaceCpuData.forEach((val: Data) => {
           const nsName = val?.metric?.namespace ?? '';
           const currentData = nameSpaceCache[nsName] || {};
-          nameSpaceCache[nsName] = { ...currentData, CPU: val.value[1] };
+          nameSpaceCache[nsName] = {
+            ...currentData,
+            CPU: val.value[1],
+          };
         });
 
         nodeMemData.forEach((val: Data) => {
           const nodeName = val?.metric?.kubernetes_io_hostname ?? '';
-          nodeCache[nodeName] = { MEM: val.value[1] };
+          nodeCache[nodeName] = {
+            MEM: val.value[1],
+          };
         });
 
         nodeCpuData.forEach((val: Data) => {
           const nodeName = val?.metric?.kubernetes_io_hostname ?? '';
           const currentData = nodeCache[nodeName] || {};
-          nodeCache[nodeName] = { ...currentData, CPU: val.value[1] };
+          nodeCache[nodeName] = {
+            ...currentData,
+            CPU: val.value[1],
+          };
         });
 
         usageCache = { pod: podCache };

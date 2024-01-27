@@ -145,18 +145,18 @@ async function getContainersPerNode() {
     }
 }
 
-function convertKiBToGiB(kibytes: number) {
+export function convertKiBToGiB(kibytes: number) {
     return kibytes / Math.pow(2,30 ); // 1048576 is 2^20
 }
 
-function parseCpuStringToCores(cpuString: string) { 
+export function parseCpuStringToCores(cpuString: string) { 
     if (cpuString.endsWith('m')) { 
         return parseInt(cpuString.slice(0, -1), 10) / 1000;
     }
     return parseInt(cpuString, 10);
 }
 
-function parseKubernetesMemoryString(memString: string) {
+export function parseKubernetesMemoryString(memString: string) {
     const units: { [key: string]: number } = {
         Ki: 1024,
         Mi: 1024 * 1024,
