@@ -5,10 +5,13 @@ import cors from 'cors';
 import kubbyController from './controllers/kubbyController';
 import promController from './controllers/promController';
 
-// async function run () {
-//   await kubbyController.getClusterInfo()
-//   process.exit(0)
-// }
+async function run () {
+
+    
+    const OBJECT = await kubbyController.getClusterMetrics();
+    // console.log(OBJECT)
+  process.exit(0)
+}
 
 const app = express();
 const PORT = 8000;
@@ -35,6 +38,10 @@ app.get('/node-view', kubbyController.getNodeView, (req: Request, res: Response)
     }
 }); 
 
+app.get('/cluster-metrics', kubbyController.getClusterMetrics, (req: Request, res: Response): void => {
+
+})
+
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => { 
     
     const defaultErr = {
@@ -51,3 +58,5 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 app.listen(PORT, () => {
   console.log(`Server listening on Port ${PORT}`)
 })
+
+run(); 
