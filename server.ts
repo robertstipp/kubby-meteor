@@ -1,9 +1,15 @@
-
-import express , {ErrorRequestHandler, NextFunction, Request, Response, response} from 'express'
+import express, {
+  ErrorRequestHandler,
+  NextFunction,
+  Request,
+  Response,
+  response,
+} from 'express';
 import cors from 'cors';
 
 import kubbyController from './controllers/kubbyController';
 import promController from './controllers/promController';
+import usageMetricsController from './controllers/usageMetricsController';
 
 async function run () {
 
@@ -26,18 +32,23 @@ const PORT = 8000;
 
 app.use(cors());
 
-app.get('/', (req: Request, res: Response) : void => {
-  res.status(200).send("HELLO\n")
-})
+app.get('/', (req: Request, res: Response): void => {
+  res.status(200).send('HELLO\n');
+});
 
-app.get('/node-view', kubbyController.getNodeView, (req: Request, res: Response): void => {
+app.get(
+  '/node-view',
+  kubbyController.getNodeView,
+  (req: Request, res: Response): void => {
     if (res.locals.nodeView) {
-        res.status(200).json(res.locals.nodeView);
+      res.status(200).json(res.locals.nodeView);
     } else {
-        res.status(400).send({ message: "Cluster information not found" });
+      res.status(400).send({ message: 'Cluster information not found' });
     }
-}); 
+  }
+);
 
+<<<<<<< HEAD
 app.get('/cluster-metrics', kubbyController.getClusterMetrics, (req: Request, res: Response): void => {
 
 })
@@ -48,15 +59,42 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
         log: 'Express error handler caught unknown middleware error',
         status: 400,
         message: { err: 'An error occurred' },
+=======
+app.get(
+  '/usage-metrics',
+  usageMetricsController.getUsageMetrics,
+  (req: Request, res: Response): void => {
+    if (res.locals.cUsageMetrics) {
+      console.log(res.locals.cUsageMetrics);
+      res.status(200).json(res.locals.cUsageMetrics);
+    } else {
+      res
+        .status(400)
+        .send({ message: 'Container usage metrics information not found' });
+>>>>>>> ContainerUsageMetrics/ND
     }
+  }
+);
 
-    const errorObj = Object.assign(defaultErr, err);
-    console.log(errorObj.log);
-    res.status(errorObj.status).send(errorObj.message);
-})
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  const defaultErr = {
+    log: 'Express error handler caught unknown middleware error',
+    status: 400,
+    message: { err: 'An error occurred' },
+  };
+
+  const errorObj = Object.assign(defaultErr, err);
+  console.log(errorObj.log);
+  res.status(errorObj.status).send(errorObj.message);
+});
 
 app.listen(PORT, () => {
+<<<<<<< HEAD
   console.log(`Server listening on Port ${PORT}`)
 })
 
 run(); 
+=======
+  console.log(`Server listening on Port ${PORT}`);
+});
+>>>>>>> ContainerUsageMetrics/ND
