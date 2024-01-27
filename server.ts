@@ -45,15 +45,20 @@ app.get(
   }
 );
 
-// usageMetrics View
-
-app.get('/usage-metrics', usageMetricsController.getUsageMetrics, (req: Request, res: Response): void =>{
-    if (res.locals.usageMetrics) {
-        res.status(200).json(res.locals.usageMetrics);
-      } else {
-        res.status(400).send({ message: 'Container usage metrics information not found' });
-      }
-});
+app.get(
+  '/usage-metrics',
+  usageMetricsController.getUsageMetrics,
+  (req: Request, res: Response): void => {
+    if (res.locals.cUsageMetrics) {
+      console.log(res.locals.cUsageMetrics);
+      res.status(200).json(res.locals.cUsageMetrics);
+    } else {
+      res
+        .status(400)
+        .send({ message: 'Container usage metrics information not found' });
+    }
+  }
+);
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   const defaultErr = {
