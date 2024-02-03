@@ -6,29 +6,28 @@ import express, {
   response,
 } from 'express';
 import cors from 'cors';
+import http from 'http';
+import { Server } from 'socket.io';
+import * as k8s from '@kubernetes/client-node';
 
 import kubbyController from './controllers/kubbyController';
 import promController from './controllers/promController';
 import usageMetricsController from './controllers/usageMetricsController';
 
-async function run () {
-
-    
-    const OBJECT = await kubbyController.getClusterMetrics();
-    // console.log(OBJECT)
-  process.exit(0)
+async function run() {
+  const OBJECT = await kubbyController.getClusterMetrics();
+  process.exit(0);
 }
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+const kc = new k8s.KubeConfig();
+kc.loadFromDefault();
+const watch = new k8s.Watch(kc);
+
 const PORT = 8000;
-
-// const KubeNamespace = 'kube-system';
-// const kc = new k8s.KubeConfig();
-
-// kc.loadFromDefault();
-// kc.loadFromFile('./kubeConfig.yaml');
-
-// const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
 
 app.use(cors());
 
@@ -53,7 +52,7 @@ app.get(
   usageMetricsController.getUsageMetrics,
   (req: Request, res: Response): void => {
     if (res.locals.cUsageMetrics) {
-    //   console.log(res.locals.cUsageMetrics);
+      //   console.log(res.locals.cUsageMetrics);
       res.status(200).json(res.locals.cUsageMetrics);
     } else {
       res
@@ -75,6 +74,46 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   res.status(errorObj.status).send(errorObj.message);
 });
 
-app.listen(PORT, () => {
+// Websocket Build Up
+io.on('connection', () => {
+  console.log('Connected');
+});
+
+const namespace = 'default'; // Define your namespace
+
+function startWatching() {
+  watch
+    .watch(
+      `/api/v1/namespaces/${namespace}/pods`, // Watch specific namespace
+      {},
+      (type, apiObj, watchObj) => {
+        if (type === 'ADDED') {
+          console.log('New Pod Added:', apiObj.metadata.name);
+          io.emit('podAdded', apiObj);
+        } else if (type === 'MODIFIED') {
+          console.log('Pod Modified:', apiObj.metadata.name);
+          io.emit('podModified', apiObj);
+        } else if (type === 'DELETED') {
+          console.log('Pod Deleted:', apiObj.metadata.name);
+          io.emit('podDeleted', apiObj);
+        }
+      },
+      (err) => {
+        console.error(err);
+        io.emit('watchError', err);
+        setTimeout(startWatching, 5000);
+      }
+    )
+    .then((req) => {
+      console.log('Watching for changes in namespace:', namespace);
+    })
+    .catch((err) => {
+      console.error('Error starting the watch:', err);
+      setTimeout(startWatching, 5000);
+    });
+}
+startWatching();
+
+server.listen(PORT, () => {
   console.log(`Server listening on Port ${PORT}`);
 });

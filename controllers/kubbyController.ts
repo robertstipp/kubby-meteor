@@ -1,14 +1,15 @@
-import k8s = require("@kubernetes/client-node");
-import { NextFunction, Response, Request } from "express";
-import client from "prom-client";
+import k8s = require('@kubernetes/client-node');
+import { NextFunction, Response, Request } from 'express';
+import client from 'prom-client';
 
-const KubeNamespace = "kube-system";
+const KubeNamespace = 'kube-system';
 const kc = new k8s.KubeConfig();
 
-kc.loadFromDefault();
-// kc.loadFromFile('./edwinscluster-config.yaml');
+// kc.loadFromDefault();
+kc.loadFromFile('./config.yaml');
 
 const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
+console.log('api', k8sApi);
 
 interface KubbyController {
   getNodeView: (req: Request, res: Response, next: NextFunction) => void;
@@ -31,49 +32,49 @@ interface KubernetesNamespaces {
   [namespaceName: string]: MetricsConfig;
 }
 interface KubernetesWorkLoads {
-    [workLoadName: string]: MetricsConfig;
+  [workLoadName: string]: MetricsConfig;
 }
 
 const totalNodes = new client.Gauge({
-  name: "kube_nodes_total",
-  help: "This is total number of nodes",
-  labelNames: ["current_context"],
+  name: 'kube_nodes_total',
+  help: 'This is total number of nodes',
+  labelNames: ['current_context'],
 });
 
 const totalCores = new client.Gauge({
-  name: "kube_total_cores",
-  help: "This is total number of CPU cores",
-  labelNames: ["current_context"],
+  name: 'kube_total_cores',
+  help: 'This is total number of CPU cores',
+  labelNames: ['current_context'],
 });
 
 const totalAllocatableCores = new client.Gauge({
-  name: "kube_total_allocatable_cores",
-  help: "This is total number of allocatable CPU cores",
-  labelNames: ["current_context"],
+  name: 'kube_total_allocatable_cores',
+  help: 'This is total number of allocatable CPU cores',
+  labelNames: ['current_context'],
 });
 
 const totalMemory = new client.Gauge({
-  name: "kube_total_memory",
-  help: "This is total number of memory",
-  labelNames: ["current_context"],
+  name: 'kube_total_memory',
+  help: 'This is total number of memory',
+  labelNames: ['current_context'],
 });
 
 const totalAllocatableMemory = new client.Gauge({
-  name: "kube_total_allocatable_memory",
-  help: "This is total number of allocatable memory",
-  labelNames: ["current_context"],
+  name: 'kube_total_allocatable_memory',
+  help: 'This is total number of allocatable memory',
+  labelNames: ['current_context'],
 });
 
 const containerCountPerNodeGauge = new client.Gauge({
-  name: "kube_container_count_per_node",
-  help: "Number of containers running on each Kubernetes node",
-  labelNames: ["node"],
+  name: 'kube_container_count_per_node',
+  help: 'Number of containers running on each Kubernetes node',
+  labelNames: ['node'],
 });
 
 const podCountPerNodeGauge = new client.Gauge({
-  name: "kube_pod_count_per_node",
-  help: "Number of pods running on each Kubernetes node",
-  labelNames: ["node"],
+  name: 'kube_pod_count_per_node',
+  help: 'Number of pods running on each Kubernetes node',
+  labelNames: ['node'],
 });
 
 const kubbyController: KubbyController = {
@@ -156,7 +157,7 @@ const kubbyController: KubbyController = {
       return next();
     } catch (error) {
       // next(error); // TODO: Make more robust
-      console.error("Error fetching nodes:", error);
+      console.error('Error fetching nodes:', error);
     }
   },
   getClusterMetrics: async () => {
@@ -173,8 +174,8 @@ const kubbyController: KubbyController = {
     try {
       const namespaces = await k8sApi.listNamespace();
       namespaces.body.items.forEach((namespace) => {
-          if (namespace.metadata?.name) {
-            // console.log(namespace.metadata)
+        if (namespace.metadata?.name) {
+          // console.log(namespace.metadata)
           OBJECT.KubernetesNamespaces[namespace.metadata?.name] = {};
         }
       });
@@ -182,16 +183,15 @@ const kubbyController: KubbyController = {
       const namespacedService = await k8sApi.listServiceForAllNamespaces();
       namespacedService.body.items.forEach((service) => {
         if (service.metadata?.name) {
-            // console.log(Object.keys(service.spec))
-            console.log(service.spec)
+          // console.log(Object.keys(service.spec))
+          console.log(service.spec);
           OBJECT.KubernetesServices[service.metadata?.name] = {};
         }
       });
-        
-        return OBJECT; 
-        
+
+      return OBJECT;
     } catch (error) {
-      console.error("Error fetching nodes:", error);
+      console.error('Error fetching nodes:', error);
     }
   },
 };
@@ -224,8 +224,8 @@ function parsePrometheusData(data: string) {
 
   // Split data into lines and filter out empty lines and comments
   const lines = data
-    .split("\n")
-    .filter((line) => line && !line.startsWith("#"));
+    .split('\n')
+    .filter((line) => line && !line.startsWith('#'));
   return lines
     .map((line) => {
       // console.log(line);
@@ -235,9 +235,9 @@ function parsePrometheusData(data: string) {
 
         // Parse labels
         const labels: { [key: string]: string } = {};
-        labelString.split(",").forEach((labelPart) => {
-          const [key, value] = labelPart.split("=");
-          labels[key.trim()] = value.trim().replace(/(^"|"$)/g, ""); // Remove surrounding quotes
+        labelString.split(',').forEach((labelPart) => {
+          const [key, value] = labelPart.split('=');
+          labels[key.trim()] = value.trim().replace(/(^"|"$)/g, ''); // Remove surrounding quotes
         });
 
         return { metricName, labels, metricValue };
@@ -255,7 +255,7 @@ async function getPodsPerNode() {
     const podCountPerNode: { [key: string]: number } = {};
 
     pods.forEach((pod) => {
-      const nodeName = pod?.spec?.nodeName ?? "";
+      const nodeName = pod?.spec?.nodeName ?? '';
       podCountPerNode[nodeName] = (podCountPerNode[nodeName] || 0) + 1;
     });
 
@@ -263,7 +263,7 @@ async function getPodsPerNode() {
       podCountPerNodeGauge.labels(nodeName).set(count);
     }
   } catch (error) {
-    console.error("Error fetching pods:", error);
+    console.error('Error fetching pods:', error);
     throw error;
   }
 }
@@ -276,7 +276,7 @@ async function getContainersPerNode() {
     const containerCountPerNode: { [key: string]: number } = {};
 
     pods.forEach((pod) => {
-      const nodeName = pod?.spec?.nodeName ?? "";
+      const nodeName = pod?.spec?.nodeName ?? '';
       const containerCount = pod?.spec?.containers.length ?? 0;
 
       containerCountPerNode[nodeName] =
@@ -287,7 +287,7 @@ async function getContainersPerNode() {
       containerCountPerNodeGauge.labels(nodeName).set(count);
     }
   } catch (error) {
-    console.error("Error fetching pods:", error);
+    console.error('Error fetching pods:', error);
     throw error;
   }
 }
@@ -297,7 +297,7 @@ function convertKiBToGiB(kibytes: number) {
 }
 
 function parseCpuStringToCores(cpuString: string) {
-  if (cpuString.endsWith("m")) {
+  if (cpuString.endsWith('m')) {
     return parseInt(cpuString.slice(0, -1), 10) / 1000;
   }
   return parseInt(cpuString, 10);

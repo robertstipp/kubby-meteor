@@ -1,34 +1,8 @@
 import { NextFunction, Response, Request } from 'express';
 import axios from 'axios';
-// type Data = {
-//   metric?: string;
-// };
 
-// Queries for Container Usage Metrics
-const host = process.env.PROMHOST || '104.198.235.133';
-
-const podMem = axios.get(
-  `http://${host}/api/v1/query?query= sum by (pod) (container_memory_usage_bytes{pod!=""})`
-);
-const podCpu = axios.get(
-  `http://${host}/api/v1/query?query= sum by (pod) (rate(container_cpu_usage_seconds_total{pod!=""}[5m]))`
-);
-
-const namespaceMem = axios.get(
-  `http://${host}/api/v1/query?query= sum by (namespace) (container_memory_usage_bytes{namespace!=""})`
-);
-
-const namespaceCpu = axios.get(
-  `http://${host}/api/v1/query?query= sum by (namespace) (rate(container_cpu_usage_seconds_total{namespace!=""}[5m]))`
-);
-
-const nodeMem = axios.get(
-  `http://${host}/api/v1/query?query= sum by (kubernetes_io_hostname) (rate(container_cpu_usage_seconds_total{}[5m]))`
-);
-
-const nodeCpu = axios.get(
-  `http://${host}/api/v1/query?query= sum by (kubernetes_io_hostname) (container_memory_usage_bytes)`
-);
+const host = process.env.PROMHOST || '35.227.104.153:31374';
+const baseURL = `http://${host}/api/v1/query?query= `;
 
 interface usageMetricsController {
   getUsageMetrics: (req: Request, res: Response, next: NextFunction) => void;
@@ -39,86 +13,94 @@ type Data = {
   value?: any;
 };
 
+const fetchData = async (query: string) => {
+  try {
+    const response = await axios.get(`${baseURL}${query}`);
+    return response.data.data.result;
+  } catch (error) {
+    return console.log(`Error Fetching Data: ${error}`);
+  }
+};
+
+const processCpuData = (cpuData: any, key: string, cache: any) => {
+  cpuData.forEach((val: Data) => {
+    const name = val?.metric?.[key] ?? '';
+    const currentData = cache[name] || {};
+    cache[name] = { ...currentData, CPU: Number(val?.value[1]) };
+  });
+};
+
+const processMemData = (memData: any, key: string, cache: any) => {
+  memData.forEach((val: Data) => {
+    const name = val?.metric?.[key] ?? '';
+    const currentData = cache[name] || {};
+    cache[name] = { ...currentData, MEM: Number(val?.value[1]) };
+  });
+};
+
+const arrayConversion = (cache: any) => {
+  const array = [];
+  for (const metric in cache) {
+    array.push({ [metric]: cache[metric] });
+  }
+  return array;
+};
+
 const usageMetricsController: usageMetricsController = {
   getUsageMetrics: async (req: Request, res: Response, next: NextFunction) => {
-    let podMemData,
-      podCpuData,
-      namespaceMemData,
-      namespaceCpuData,
-      nodeMemData,
-      nodeCpuData;
     let usageCache: any = {};
+    const podCache: { [key: string]: any } = {},
+      nameSpaceCache: { [key: string]: any } = {},
+      nodeCache: { [key: string]: any } = {};
+
     try {
-      Promise.all([
-        podMem,
-        podCpu,
-        namespaceMem,
-        namespaceCpu,
-        nodeCpu,
-        nodeMem,
-      ]).then((responses) => {
-        const [
-          podMemRes,
-          podCpuRes,
-          namespaceMemRes,
-          namespaceCpuRes,
-          nodeMemRes,
-          nodeCpuRes,
-        ] = responses;
-        const podCache: { [key: string]: any } = {};
-        const nameSpaceCache: { [key: string]: any } = {};
-        const nodeCache: { [key: string]: any } = {};
+      const [
+        podMemData,
+        podCpuData,
+        namespaceMemData,
+        namespaceCpuData,
+        nodeCpuData,
+        nodeMemData,
+      ] = await Promise.all([
+        fetchData('sum by (pod) (container_memory_usage_bytes{pod!=""})'),
+        fetchData(
+          'sum by (pod) (rate(container_cpu_usage_seconds_total{pod!=""}[5m]))'
+        ),
+        fetchData(
+          'sum by (namespace) (container_memory_usage_bytes{namespace!=""})'
+        ),
+        fetchData(
+          'sum by (namespace) (rate(container_cpu_usage_seconds_total{namespace!=""}[5m]))'
+        ),
+        fetchData(
+          'sum by (kubernetes_io_hostname) (rate(container_cpu_usage_seconds_total{}[5m]))'
+        ),
+        fetchData(
+          'sum by (kubernetes_io_hostname) (container_memory_usage_bytes)'
+        ),
+      ]);
 
-        podMemData = podMemRes.data.data.result;
-        podCpuData = podCpuRes.data.data.result;
-        namespaceCpuData = namespaceCpuRes.data.data.result;
-        namespaceMemData = namespaceMemRes.data.data.result;
-        nodeMemData = nodeMemRes.data.data.result;
-        nodeCpuData = nodeCpuRes.data.data.result;
+      processCpuData(podCpuData, 'pod', podCache);
+      processMemData(podMemData, 'pod', podCache);
+      processCpuData(nodeCpuData, 'kubernetes_io_hostname', nodeCache);
+      processMemData(nodeMemData, 'kubernetes_io_hostname', nodeCache);
+      processCpuData(namespaceCpuData, 'namespace', nameSpaceCache);
+      processMemData(namespaceMemData, 'namespace', nameSpaceCache);
 
-        podMemData.forEach((val: Data) => {
-          const podName = val?.metric?.pod ?? '';
-          podCache[podName] = { MEM: val.value[1] };
-        });
+      // Place Convert Organized Caches to Arrays for Front
+      // console.log('Check for data', podCache);
+      const podArr = arrayConversion(podCache);
+      const nameSpaceArr = arrayConversion(nameSpaceCache);
+      const nodeArr = arrayConversion(nodeCache);
 
-        podCpuData.forEach((val: Data) => {
-          const podName = val?.metric?.pod ?? '';
-          const currentData = podCache[podName] || {};
-          podCache[podName] = { ...currentData, CPU: val.value[1] };
-        });
-
-        namespaceMemData.forEach((val: Data) => {
-          const nsName = val?.metric?.namespace ?? '';
-          nameSpaceCache[nsName] = { MEM: val.value[1] };
-        });
-
-        namespaceCpuData.forEach((val: Data) => {
-          const nsName = val?.metric?.namespace ?? '';
-          const currentData = nameSpaceCache[nsName] || {};
-          nameSpaceCache[nsName] = { ...currentData, CPU: val.value[1] };
-        });
-
-        nodeMemData.forEach((val: Data) => {
-          const nodeName = val?.metric?.kubernetes_io_hostname ?? '';
-          nodeCache[nodeName] = { MEM: val.value[1] };
-        });
-
-        nodeCpuData.forEach((val: Data) => {
-          const nodeName = val?.metric?.kubernetes_io_hostname ?? '';
-          const currentData = nodeCache[nodeName] || {};
-          nodeCache[nodeName] = { ...currentData, CPU: val.value[1] };
-        });
-
-        usageCache = { pod: podCache };
-        usageCache = {
-          ...usageCache,
-          namespace: nameSpaceCache,
-          node: nodeCache,
-        };
-        res.locals.cUsageMetrics = usageCache;
-        return next();
-      });
-    } catch (error) {
+      usageCache = {
+        pod: podArr,
+        namespace: nameSpaceArr,
+        node: nodeArr,
+      };
+      res.locals.cUsageMetrics = usageCache;
+      return next();
+    } catch (error: any) {
       console.log('Error in usageMetricsController: ', error);
     }
   },
