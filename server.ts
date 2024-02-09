@@ -9,6 +9,7 @@ import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
 import * as k8s from '@kubernetes/client-node';
+import { kc } from './k8s-client';
 
 import kubbyController from './controllers/kubbyController';
 import promController from './controllers/promController';
@@ -29,8 +30,6 @@ const io = new Server(server, {
   },
 });
 
-const kc = new k8s.KubeConfig();
-kc.loadFromDefault();
 const watch = new k8s.Watch(kc);
 
 const PORT = 8000;
