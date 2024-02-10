@@ -10,6 +10,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import * as k8s from '@kubernetes/client-node';
 import { kc } from './k8s-client';
+import metricsRouter from './routes/metricsRouter';
 
 import kubbyController from './controllers/kubbyController';
 import promController from './controllers/promController';
@@ -40,32 +41,7 @@ app.get('/', (req: Request, res: Response): void => {
   res.status(200).send('HELLO\n');
 });
 
-app.get(
-  '/node-view',
-  kubbyController.getNodeView,
-  (req: Request, res: Response): void => {
-    if (res.locals.nodeView) {
-      res.status(200).json(res.locals.nodeView);
-    } else {
-      res.status(400).send({ message: 'Cluster information not found' });
-    }
-  }
-);
-
-app.get(
-  '/usage-metrics',
-  usageMetricsController.getUsageMetrics,
-  (req: Request, res: Response): void => {
-    if (res.locals.cUsageMetrics) {
-      //   console.log(res.locals.cUsageMetrics);
-      res.status(200).json(res.locals.cUsageMetrics);
-    } else {
-      res
-        .status(400)
-        .send({ message: 'Container usage metrics information not found' });
-    }
-  }
-);
+app.use('/', metricsRouter);
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   const defaultErr = {
@@ -122,3 +98,31 @@ startWatching();
 server.listen(PORT, () => {
   console.log(`Server listening on Port ${PORT}`);
 });
+
+// Routes
+// app.get(
+//   '/usage-metrics',
+//   usageMetricsController.getUsageMetrics,
+//   (req: Request, res: Response): void => {
+//     if (res.locals.cUsageMetrics) {
+//       //   console.log(res.locals.cUsageMetrics);
+//       res.status(200).json(res.locals.cUsageMetrics);
+//     } else {
+//       res
+//         .status(400)
+//         .send({ message: 'Container usage metrics information not found' });
+//     }
+//   }
+// );
+
+// app.get(
+//   '/node-view',
+//   kubbyController.getNodeView,
+//   (req: Request, res: Response): void => {
+//     if (res.locals.nodeView) {
+//       res.status(200).json(res.locals.nodeView);
+//     } else {
+//       res.status(400).send({ message: 'Cluster information not found' });
+//     }
+//   }
+// );
