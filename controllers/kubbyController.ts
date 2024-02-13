@@ -1,15 +1,13 @@
 import k8s = require('@kubernetes/client-node');
 import { NextFunction, Response, Request } from 'express';
 import client from 'prom-client';
+import { kc, k8sApi } from '../k8s-client';
 
 const KubeNamespace = 'kube-system';
-const kc = new k8s.KubeConfig();
 
-// kc.loadFromDefault();
-kc.loadFromFile('./config.yaml');
-
-const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
-console.log('api', k8sApi);
+// kc.loadFromFile('./config.yaml');
+// const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
+// console.log('api', k8sApi);
 
 interface KubbyController {
   getNodeView: (req: Request, res: Response, next: NextFunction) => void;
@@ -150,8 +148,6 @@ const kubbyController: KubbyController = {
         }
         return acc;
       }, {} as { [key: string]: PrometheusData | PrometheusData[] });
-
-      // console.log(groupedPrometheusData);
 
       res.locals.nodeView = groupedPrometheusData;
       return next();
