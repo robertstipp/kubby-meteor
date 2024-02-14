@@ -64,7 +64,6 @@ metricsRouter.get(
   podMetricsController.getPodStats,
   async (req: Request, res: Response) => {
     try {
-      // const data = await getPodStats();
       res.status(200).json(res.locals.podStats);
     } catch (err) {
       console.log(err);
@@ -89,7 +88,7 @@ metricsRouter.get(
   clusterMetricsController.getClusterMetrics,
   async (req, res) => {
     try {
-      // const data = await getClusterMetrics();
+      console.log('here', res.locals.clusterMetrics);
       res.status(200).json(res.locals.clusterMetrics);
     } catch (err) {
       console.log(err);
