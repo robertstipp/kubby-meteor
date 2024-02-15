@@ -20,8 +20,12 @@ const nodeMetricsController: nodeMetricsController = {
       }
       res.locals.nodeStats = nodes;
       return next();
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      return next({
+        log: 'Error occurred obtaining node stats data',
+        status: 400,
+        message: { error: 'Error in nodeMetricsController' },
+      });
     }
   },
 };

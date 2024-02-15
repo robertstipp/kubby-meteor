@@ -5,7 +5,6 @@ import { kc, k8sApi, metricsClient } from '../k8s-client';
 interface podMetricsController {
   getPodResources: (req: Request, res: Response, next: NextFunction) => void;
   getPodStats: (req: Request, res: Response, next: NextFunction) => void;
-  // getPodStats: () => void;
 }
 
 const getNodeResources = async () => {
@@ -74,11 +73,14 @@ const podMetricsController: podMetricsController = {
         // Temp added usage to POD
         node.resources.pods.usage += 1;
       }
-      console.log('nodes', nodes);
       res.locals.podResources = nodes;
       return next();
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      return next({
+        log: 'Error occurred obtaining pod resource data',
+        status: 400,
+        message: { error: 'Error in podMetricsController' },
+      });
     }
   },
   getPodStats: async (req: Request, res: Response, next: NextFunction) => {
@@ -104,7 +106,11 @@ const podMetricsController: podMetricsController = {
       res.locals.podStats = pods;
       return next();
     } catch (err) {
-      console.log(err);
+      return next({
+        log: 'Error occurred obtaining pod stats data',
+        status: 400,
+        message: { error: 'Error in podMetricsController' },
+      });
     }
   },
 };

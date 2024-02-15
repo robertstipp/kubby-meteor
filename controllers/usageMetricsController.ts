@@ -105,10 +105,9 @@ const usageMetricsController: usageMetricsController = {
       return next();
     } catch (error: any) {
       return next({
-        log: 'Error Occured Obtaining obtaining container usage data',
+        log: 'Error occurred obtaining container usage data',
         status: 400,
-        message: { error: 'Error in Usage Metrics Controller' },
-        // console.log('Error in usageMetricsController: ', error);
+        message: { error: 'Error in usageMetricsController' },
       });
     }
   },
