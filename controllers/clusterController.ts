@@ -1,6 +1,7 @@
 import * as k8s from '@kubernetes/client-node';
 import { NextFunction, Response, Request } from 'express';
 import { kc, k8sApi, metricsClient } from '../k8s-client';
+import { convertKiBToMB } from './usageMetricsController';
 
 interface clusterMetricsController {
   getClusterInfo: (req: Request, res: Response, next: NextFunction) => void;

@@ -13,12 +13,11 @@ metricsRouter.get(
   usageMetricsController.getUsageMetrics,
   (req: Request, res: Response): void => {
     if (res.locals.cUsageMetrics) {
-      //   console.log(res.locals.cUsageMetrics);
       res.status(200).json(res.locals.cUsageMetrics);
     } else {
       res
         .status(400)
-        .send({ message: 'Container usage metrics information not found' });
+        .send({ message: 'Container usage metrics info not found' });
     }
   }
 );
@@ -30,7 +29,7 @@ metricsRouter.get(
     if (res.locals.nodeView) {
       res.status(200).json(res.locals.nodeView);
     } else {
-      res.status(400).send({ message: 'Cluster information not found' });
+      res.status(400).send({ message: 'Node view info not found' });
     }
   }
 );
@@ -39,10 +38,10 @@ metricsRouter.get(
   '/clusterInfo',
   clusterMetricsController.getClusterInfo,
   (req: Request, res: Response) => {
-    try {
+    if (res.locals.clusterInfo) {
       res.status(200).json(res.locals.clusterInfo);
-    } catch (err) {
-      console.log(err);
+    } else {
+      res.status(400).send({ message: 'Cluster info not found' });
     }
   }
 );
@@ -50,11 +49,11 @@ metricsRouter.get(
 metricsRouter.get(
   '/podResources',
   podMetricsController.getPodResources,
-  async (req: Request, res: Response) => {
-    try {
+  (req: Request, res: Response) => {
+    if (res.locals.podResources) {
       res.status(200).json(res.locals.podResources);
-    } catch (err) {
-      console.log(err);
+    } else {
+      res.status(400).send({ message: 'Pod resources info not found' });
     }
   }
 );
@@ -62,11 +61,11 @@ metricsRouter.get(
 metricsRouter.get(
   '/podStats',
   podMetricsController.getPodStats,
-  async (req: Request, res: Response) => {
-    try {
+  (req: Request, res: Response) => {
+    if (res.locals.podStats) {
       res.status(200).json(res.locals.podStats);
-    } catch (err) {
-      console.log(err);
+    } else {
+      res.status(400).send({ message: 'Pod stats info not found' });
     }
   }
 );
@@ -74,11 +73,11 @@ metricsRouter.get(
 metricsRouter.get(
   '/nodeStats',
   nodeMetricsController.getNodeStats,
-  async (req: Request, res: Response) => {
-    try {
+  (req: Request, res: Response) => {
+    if (res.locals.nodeStats) {
       res.status(200).json(res.locals.nodeStats);
-    } catch (err) {
-      console.log(err);
+    } else {
+      res.status(400).send({ message: 'Node stats info not found' });
     }
   }
 );
@@ -86,12 +85,11 @@ metricsRouter.get(
 metricsRouter.get(
   '/clusterMetrics',
   clusterMetricsController.getClusterMetrics,
-  async (req, res) => {
-    try {
-      console.log('here', res.locals.clusterMetrics);
+  (req, res) => {
+    if (res.locals.clusterMetrics) {
       res.status(200).json(res.locals.clusterMetrics);
-    } catch (err) {
-      console.log(err);
+    } else {
+      res.status(400).send({ message: 'Cluster metrics info not found' });
     }
   }
 );
@@ -100,10 +98,12 @@ metricsRouter.get(
   '/clusterMetricsMap',
   clusterMetricsController.getFlatClusterMetrics,
   async (req: Request, res: Response) => {
-    try {
+    if (res.locals.flatClusterMetrics) {
       res.status(200).json(res.locals.flatClusterMetrics);
-    } catch (err) {
-      console.log(err);
+    } else {
+      res
+        .status(400)
+        .send({ message: 'Flat cluster metrics map info not found' });
     }
   }
 );

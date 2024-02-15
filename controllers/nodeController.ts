@@ -8,17 +8,21 @@ interface nodeMetricsController {
 
 const nodeMetricsController: nodeMetricsController = {
   getNodeStats: async (req: Request, res: Response, next: NextFunction) => {
-    const response = await metricsClient.getNodeMetrics();
-    const { items } = response;
-    const nodes = [];
-    for (const node of items) {
-      nodes.push({
-        nodeName: node.metadata.name,
-        usage: node.usage,
-      });
+    try {
+      const response = await metricsClient.getNodeMetrics();
+      const { items } = response;
+      const nodes = [];
+      for (const node of items) {
+        nodes.push({
+          nodeName: node.metadata.name,
+          usage: node.usage,
+        });
+      }
+      res.locals.nodeStats = nodes;
+      return next();
+    } catch (err) {
+      console.log(err);
     }
-    res.locals.nodeStats = nodes;
-    return next();
   },
 };
 

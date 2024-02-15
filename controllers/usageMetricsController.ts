@@ -34,7 +34,10 @@ const processMemData = (memData: any, key: string, cache: any) => {
   memData.forEach((val: Data) => {
     const name = val?.metric?.[key] ?? '';
     const currentData = cache[name] || {};
-    cache[name] = { ...currentData, MEM: Number(val?.value[1]) };
+    cache[name] = {
+      ...currentData,
+      MEM: convertKiBToMB(Number(val?.value[1])),
+    };
   });
 };
 
@@ -101,10 +104,19 @@ const usageMetricsController: usageMetricsController = {
       res.locals.cUsageMetrics = usageCache;
       return next();
     } catch (error: any) {
-      console.log('Error in usageMetricsController: ', error);
+      return next({
+        log: 'Error Occured Obtaining obtaining container usage data',
+        status: 400,
+        message: { error: 'Error in Usage Metrics Controller' },
+        // console.log('Error in usageMetricsController: ', error);
+      });
     }
   },
 };
+
+export function convertKiBToMB(kibytes: number) {
+  return kibytes / 1024;
+}
 
 export default usageMetricsController;
 
